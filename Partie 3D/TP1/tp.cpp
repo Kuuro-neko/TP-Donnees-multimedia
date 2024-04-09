@@ -28,6 +28,10 @@
 #include "src/Vec3.h"
 #include "src/Camera.h"
 
+
+using namespace std;
+
+
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 struct Triangle {
@@ -62,12 +66,12 @@ Mesh mesh;
 
 //Mesh to generate
 Mesh unit_sphere;
-Mesh coneMesh;
+Mesh additionnal_shape;
 
 bool display_normals;
 bool display_loaded_mesh;
 bool display_unit_sphere;
-bool display_cone;
+bool display_additionnal;
 DisplayMode displayMode;
 
 // -------------------------------------------
@@ -84,6 +88,7 @@ static bool mouseZoomPressed = false;
 static int lastX=0, lastY=0, lastZoom=0;
 static bool fullScreen = false;
 static int n=20;
+static int shape = 0;
 
 void setUnitSphere( Mesh & o_mesh, int nX=20, int nY=20 )
 {
@@ -106,29 +111,88 @@ void setUnitSphere( Mesh & o_mesh, int nX=20, int nY=20 )
     }
 }
 
-void setConeMesh( Mesh & o_mesh, int nX=20, int nY=20 )
+void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
 {
     o_mesh.vertices.clear();
     o_mesh.triangles.clear();
     o_mesh.normals.clear();
 
-    o_mesh.vertices.push_back( Vec3(0, 0, -1) );
-    o_mesh.vertices.push_back( Vec3(0, 0, 1) );
+    switch (shape) {
+    case 0: // Cone
+        o_mesh.vertices.push_back( Vec3(0, 0, -0.5) );
+        o_mesh.vertices.push_back( Vec3(0, 0, 1) );
 
-    o_mesh.normals.push_back( Vec3(0,0, -1) );
-    o_mesh.normals.push_back( Vec3(0,0, 1) );
+        o_mesh.normals.push_back( Vec3(0,0, -0.5) );
+        o_mesh.normals.push_back( Vec3(0,0, 1) );
 
-    for (int i = 0; i <= nX; i++) {
-        double x = cos(2*M_PI * i/nX);
-        double y = sin(2*M_PI * i/nX);
-        double z = -1;
-        o_mesh.vertices.push_back( Vec3(x, y, z) );
-        o_mesh.normals.push_back( Vec3(x, y, z) );
-    }
+        for (int i = 0; i <= nX; i++) {
+            double x = cos(2*M_PI * i/nX);
+            double y = sin(2*M_PI * i/nX);
+            double z = -0.5;
+            o_mesh.vertices.push_back( Vec3(x, y, z) );
+            o_mesh.normals.push_back( Vec3(x, y, z) );
+        }
 
-    for (unsigned int i = 2; i < o_mesh.vertices.size()-1; i++) {
-        o_mesh.triangles.push_back( Triangle(i, 0, i+1));
-        o_mesh.triangles.push_back( Triangle(i, i+1, 1));
+        for (unsigned int i = 2; i < o_mesh.vertices.size()-1; i++) {
+            o_mesh.triangles.push_back( Triangle(i, 0, i+1));
+            o_mesh.triangles.push_back( Triangle(i, i+1, 1));
+        }
+        break;
+    case 1: // Diabolo
+        if (nY%2 == 1) {
+            nY++;
+        }
+
+        // Premiere demi sphere
+
+        for (int i = 0; i <= nX; i++) {
+            for (int j = 0; j <= nY/2; j++) {
+                double x = cos(2*M_PI * i/nX)*cos(M_PI * j/nY - M_PI_2);
+                double y = sin(2*M_PI * i/nX)*cos(M_PI * j/nY - M_PI_2);
+                double z = sin(M_PI * j/nY - M_PI_2) + 1;
+                o_mesh.vertices.push_back( Vec3(x, y, z) );
+                o_mesh.normals.push_back( Vec3(x, y, z) );
+            }
+        }
+
+        o_mesh.vertices.push_back( Vec3(0, 0, 1) );
+
+        for (int i = 0; i < nX; i++) {
+            for (int j = 0; j < nY/2; j++) {
+                o_mesh.triangles.push_back( Triangle(i*(nY/2+1)+j, (i+1)*(nY/2+1)+j, i*(nY/2+1)+j+1));
+                o_mesh.triangles.push_back( Triangle(i*(nY/2+1)+j+1, (i+1)*(nY/2+1)+j, (i+1)*(nY/2+1)+j+1));
+                if (j == nY/2-1) {
+                    o_mesh.triangles.push_back( Triangle(i*(nY/2+1)+j+1, (i+1)*(nY/2+1)+j+1, o_mesh.vertices.size()-1));
+                }
+            }
+        }
+
+        int offset = o_mesh.vertices.size();
+
+        // Deuxieme demi sphere
+
+        for (int i = nX; i >= 0; i--) {
+            for (int j = nY; j>= nY/2 ;j--) {
+                double x = cos(2*M_PI * i/nX)*cos(M_PI * j/nY - M_PI_2);
+                double y = sin(2*M_PI * i/nX)*cos(M_PI * j/nY - M_PI_2);
+                double z = sin(M_PI * j/nY - M_PI_2) - 1;
+                o_mesh.vertices.push_back( Vec3(x, y, z) );
+                o_mesh.normals.push_back( Vec3(x, y, z) );
+            }   
+        }
+
+        o_mesh.vertices.push_back( Vec3(0, 0, -1) );
+
+        for (int i = 0; i < nX; i++) {
+            for (int j = 0; j < nY/2; j++) {
+                o_mesh.triangles.push_back( Triangle(offset+i*(nY/2+1)+j, offset+(i+1)*(nY/2+1)+j, offset+i*(nY/2+1)+j+1));
+                o_mesh.triangles.push_back( Triangle(offset+i*(nY/2+1)+j+1, offset+(i+1)*(nY/2+1)+j, offset+(i+1)*(nY/2+1)+j+1));
+                if (j == nY/2-1) {
+                    o_mesh.triangles.push_back( Triangle(offset+i*(nY/2+1)+j+1, offset+(i+1)*(nY/2+1)+j+1, o_mesh.vertices.size()-1));
+                }
+            }
+        }
+        break;
     }
 }
 
@@ -269,7 +333,7 @@ void init () {
     displayMode = LIGHTED;
     display_normals = false;
     display_unit_sphere = false;
-    display_cone = false;
+    display_additionnal = false;
     display_loaded_mesh = true;
 
     glLineWidth(1.);
@@ -378,9 +442,9 @@ void draw () {
 
     }
 
-    if( display_cone ){
+    if( display_additionnal ){
         glColor3f(1,0.8,0.8);
-        drawTriangleMesh(coneMesh);
+        drawTriangleMesh(additionnal_shape);
     }
 
     if( display_unit_sphere ){
@@ -406,8 +470,8 @@ void draw () {
         if( display_loaded_mesh )
             drawTriangleMesh(mesh);
 
-        if( display_cone )
-            drawTriangleMesh(coneMesh);
+        if( display_additionnal )
+            drawTriangleMesh(additionnal_shape);
 
         glDisable (GL_POLYGON_OFFSET_LINE);
         glEnable (GL_LIGHTING);
@@ -441,6 +505,31 @@ void idle () {
     glutPostRedisplay ();
 }
 
+void printUsage () {
+    cout << endl
+         << "--------------------------------------" << endl
+         << "TP1" << endl
+         << "--------------------------------------" << endl
+         << "USAGE: ./Main" << endl
+         << "--------------------------------------" << endl
+         << "Keyboard commands" << endl
+         << "--------------------------------------" << endl
+         << " ?: Print help" << endl
+         << " n: Toggle normal display" << endl
+         << " w: Toggle display mode" << endl
+         << " 1: Toggle loaded mesh display" << endl
+         << " 2: Toggle unit sphere mesh display" << endl
+         << " 3: Toggle additionnal mesh display" << endl
+         << " -: Decrease the number of meridians and parallels of the generated sphere" << endl
+         << " +: Increase the number of meridians and parallels of the generated sphere" << endl
+         << " s: Cycle through the additional mesh shape" << endl
+         << " f: Toggle full screen" << endl
+         << " <drag>+<left button>: rotate the scene" << endl
+         << " <drag>+<right button>: move the scene" << endl
+         << " <drag>+<middle button>: zoom" << endl
+         << "--------------------------------------" << endl;
+}
+
 void key (unsigned char keyPressed, int x, int y) {
     switch (keyPressed) {
     case 'f':
@@ -471,21 +560,38 @@ void key (unsigned char keyPressed, int x, int y) {
         display_unit_sphere = !display_unit_sphere;
         break;
 
-    case '3': //Toggle cone mesh display
-        display_cone = !display_cone;
+    case '3': //Toggle additionnal mesh display
+        display_additionnal = !display_additionnal;
         break;
     
     case '-':
         if (n > 2) n--;
-        setUnitSphere( unit_sphere, n, n );
+        if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, n, n, shape );
         break;
 
     case '+':
         n++;
-        setUnitSphere( unit_sphere, n, n );
+        if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, n, n, shape );
         break;
 
+    case 's': //Cycle through the additional mesh shape
+        shape = (shape+1)%2;
+        switch (shape) {
+        case 0:
+            cout << "Additionnal shape (toggle it with 3) is now cone" << endl;
+            break;
+        case 1:
+            cout << "Additionnal shape (toggle it with 3) is now diabolo" << endl;
+            break;
+        }
+        setAdditionnalMesh( additionnal_shape, n, n, shape );
+        break;
+
+    case '?':
     default:
+        printUsage ();
         break;
     }
     idle ();
@@ -567,7 +673,7 @@ int main (int argc, char ** argv) {
     //openOFF("data/elephant_n.off", mesh.vertices, mesh.normals, mesh.triangles);
 
     setUnitSphere( unit_sphere );
-    setConeMesh( coneMesh );
+    setAdditionnalMesh( additionnal_shape );
 
     glutMainLoop ();
     return EXIT_SUCCESS;
