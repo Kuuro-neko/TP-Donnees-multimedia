@@ -37,6 +37,6 @@ Keys
   - **\-** : decrease the number of meridians and parallels of the generated sphere
   - **\+** : increase the number of meridians and parallels of the generated sphere    
 - **3** : toggle display of the additionnal meshes
-- **c** : cycle through the additionnal meshes (Cone, Diabolo)
+- **S/s** : cycle through the additionnal meshes (Cone, Diabolo, Dodecahedron)
 - **Middle mouse button + move** : rotate the scene
 - **Left mouse button + move** : rotate the scene
