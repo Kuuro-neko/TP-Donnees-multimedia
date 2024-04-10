@@ -119,6 +119,7 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
 
     switch (shape) {
     case 0: // Cone
+    {
         o_mesh.vertices.push_back( Vec3(0, 0, -0.5) );
         o_mesh.vertices.push_back( Vec3(0, 0, 1) );
 
@@ -138,7 +139,9 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             o_mesh.triangles.push_back( Triangle(i, i+1, 1));
         }
         break;
+    }
     case 1: // Diabolo
+    {
         if (nY%2 == 1) {
             nY++;
         }
@@ -193,6 +196,71 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             }
         }
         break;
+    }
+    case 2: // Dodecahedron
+    {
+        double r = 1;
+        // Cube vertices
+        for (int x = -1; x <= 1; x+=2) {
+            for (int y = -1; y <= 1; y+=2) {
+                for (int z = -1; z <= 1; z+=2) {
+                    o_mesh.vertices.push_back( Vec3(x*r/sqrt(3), y*r/sqrt(3), z*r/sqrt(3)) );
+                    o_mesh.normals.push_back( Vec3(x*r/sqrt(3), y*r/sqrt(3), z*r/sqrt(3)) );
+                }
+            }
+        }
+
+        // Dodecahedron vertices
+        double phi = (1+sqrt(5))/2;
+        for (int diffx = -1; diffx <= 1; diffx+=2) {
+            for (int diffy = -1; diffy <= 1; diffy+=2) {
+                o_mesh.vertices.push_back( Vec3(0, diffx*r/(sqrt(3)*phi), diffy*(r*phi)/sqrt(3)) );
+                o_mesh.normals.push_back( Vec3(0, diffx*r/(sqrt(3)*phi), diffy*(r*phi)/sqrt(3)) );
+                
+            }
+        }
+        for (int diffx = -1; diffx <= 1; diffx+=2) {
+            for (int diffy = -1; diffy <= 1; diffy+=2) {
+                o_mesh.vertices.push_back( Vec3(diffx*r/(sqrt(3)*phi), diffy*(r*phi)/sqrt(3), 0) );
+                o_mesh.normals.push_back( Vec3(diffx*r/(sqrt(3)*phi), diffy*(r*phi)/sqrt(3), 0) );
+                
+            }
+        }
+        for (int diffx = -1; diffx <= 1; diffx+=2) {
+            for (int diffy = -1; diffy <= 1; diffy+=2) {
+                o_mesh.vertices.push_back( Vec3(diffy*(r*phi)/sqrt(3), 0, diffx*r/(sqrt(3)*phi)) );
+                o_mesh.normals.push_back( Vec3(diffy*(r*phi)/sqrt(3), 0, diffx*r/(sqrt(3)*phi)) );
+                
+            }
+        }
+
+        int faces[
+            12*5
+        ] = {
+            0, 12, 1, 18, 16,
+            0, 16, 2, 10, 8,
+            0, 8, 4, 14, 12,
+            1, 18, 3, 11, 9,
+            1, 9, 5, 14, 12,
+            2, 10, 6, 15, 13,
+            2, 13, 3, 18, 16,
+            3, 11, 7, 15, 13,
+            4, 14, 5, 19, 17,
+            4, 17, 6, 10, 8,
+            5, 19, 7, 11, 9,
+            6, 15, 7, 19, 17
+        };
+
+        for (int i = 0; i < 12*5; i+=5) {
+            o_mesh.triangles.push_back( Triangle(faces[i], faces[i+1], faces[i+4]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+1], faces[i+3], faces[i+4]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+3], faces[i+1], faces[i+2]) );
+            o_mesh.triangles.push_back( Triangle(faces[i], faces[i+4], faces[i+1]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+1], faces[i+4], faces[i+3]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+3], faces[i+2], faces[i+1]) );
+        }   
+        break;
+    }
     }
 }
 
@@ -522,12 +590,26 @@ void printUsage () {
          << " 3: Toggle additionnal mesh display" << endl
          << " -: Decrease the number of meridians and parallels of the generated sphere" << endl
          << " +: Increase the number of meridians and parallels of the generated sphere" << endl
-         << " s: Cycle through the additional mesh shape" << endl
+         << " S/s: Cycle through the additional mesh shapes" << endl
          << " f: Toggle full screen" << endl
          << " <drag>+<left button>: rotate the scene" << endl
          << " <drag>+<right button>: move the scene" << endl
          << " <drag>+<middle button>: zoom" << endl
          << "--------------------------------------" << endl;
+}
+
+void printAdditionnalShape(int shape) {
+    switch (shape) {
+        case 0:
+            cout << "Additionnal shape (toggle it with 3) is now cone" << endl;
+            break;
+        case 1:
+            cout << "Additionnal shape (toggle it with 3) is now diabolo" << endl;
+            break;
+        case 2:
+            cout << "Additionnal shape (toggle it with 3) is now dodecahedron" << endl;
+            break;
+        }
 }
 
 void key (unsigned char keyPressed, int x, int y) {
@@ -577,15 +659,8 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 's': //Cycle through the additional mesh shape
-        shape = (shape+1)%2;
-        switch (shape) {
-        case 0:
-            cout << "Additionnal shape (toggle it with 3) is now cone" << endl;
-            break;
-        case 1:
-            cout << "Additionnal shape (toggle it with 3) is now diabolo" << endl;
-            break;
-        }
+        shape = (shape+1)%3;
+        printAdditionnalShape(shape);
         setAdditionnalMesh( additionnal_shape, n, n, shape );
         break;
 
