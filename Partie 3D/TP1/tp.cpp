@@ -197,7 +197,7 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
         }
         break;
     }
-    case 2: // Stellated dodecahedron
+    case 2: // Dodecahedron
     {
         double r = 1;
         // Cube vertices
@@ -234,21 +234,6 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             }
         }
 
-        
-                
-
-        // Icosahedron vertices
-   /*      double a = 1.3;
-        for (int diffx = -1; diffx <= 1; diffx+=2) {
-            for (int diffy = -1; diffy <= 1; diffy+=2) {
-                o_mesh.vertices.push_back( Vec3(diffx*r*a, diffy*r*a/phi, 0) );
-                o_mesh.normals.push_back( Vec3(diffx*r*a, diffy*r*a/phi, 0) );
-                o_mesh.vertices.push_back( Vec3(0, diffx*r*a, diffy*r*a/phi) );
-                o_mesh.normals.push_back( Vec3(0, diffx*r*a, diffy*r*a/phi) );
-                o_mesh.vertices.push_back( Vec3(diffy*r*a/phi, 0, diffx*r*a) );
-                o_mesh.normals.push_back( Vec3(diffy*r*a/phi, 0, diffx*r*a) );
-            }
-        } */
         int faces[
             12*5
         ] = {
@@ -258,7 +243,7 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             1, 18, 3, 11, 9,
             1, 9, 5, 14, 12,
             2, 10, 6, 15, 13,
-            2, 13, 7, 18, 16,
+            2, 13, 3, 18, 16,
             3, 11, 7, 15, 13,
             4, 14, 5, 19, 17,
             4, 17, 6, 10, 8,
@@ -270,6 +255,9 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             o_mesh.triangles.push_back( Triangle(faces[i], faces[i+1], faces[i+4]) );
             o_mesh.triangles.push_back( Triangle(faces[i+1], faces[i+3], faces[i+4]) );
             o_mesh.triangles.push_back( Triangle(faces[i+3], faces[i+1], faces[i+2]) );
+            o_mesh.triangles.push_back( Triangle(faces[i], faces[i+4], faces[i+1]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+1], faces[i+4], faces[i+3]) );
+            o_mesh.triangles.push_back( Triangle(faces[i+3], faces[i+2], faces[i+1]) );
         }   
         break;
     }
