@@ -45,6 +45,7 @@ void Mesh::computeSkinningWeights( Skeleton & skeleton ) {
     //Don't forget to normalize weights
     // these weights shoud be stored in vertex.weights:
 
+    float n = 8.; // Plus n est grand, plus les poids sont concentrés autour des os et l'animation est plus concentrée. Pour n=2, l'animation touche une partie trop large du mesh.
     for( unsigned int i = 0 ; i < vertices.size() ; ++i ) {
         MeshVertex & vertex = vertices[ i ];
         vertex.weights.resize( skeleton.bones.size() );
@@ -57,16 +58,12 @@ void Mesh::computeSkinningWeights( Skeleton & skeleton ) {
             );
 
             float d = sqrt(
-                pow((bone_position[0] - vertex.position[0]), 2.)
-                + pow((bone_position[1] - vertex.position[1]), 2.)
-                + pow((bone_position[2] - vertex.position[2]), 2.)
+                pow((vertex.position[0] - bone_position[0]), 2.)
+                + pow((vertex.position[1] - bone_position[1]), 2.)
+                + pow((vertex.position[2] - bone_position[2]), 2.)
             );
-            if (d == 0) {
-                vertex.weights[j] = 1;
-                continue;
-            }
 
-            vertex.weights[j] = pow((1/d),3);
+            vertex.weights[j] = pow((1/d),n);
             w_sum += vertex.weights[j];
         }
         for (int j = 0; j < skeleton.bones.size(); ++j) {
@@ -80,7 +77,6 @@ void Mesh::computeSkinningWeights( Skeleton & skeleton ) {
 }
 
 void Mesh::draw( int displayed_bone ) const {
-
     glEnable(GL_LIGHTING);
     glBegin (GL_TRIANGLES);
     for (unsigned int i = 0; i < triangles.size (); i++)
@@ -92,6 +88,8 @@ void Mesh::draw( int displayed_bone ) const {
                 // Indications:
                 //Call the function scalarToRGB so that you get the same coloring as slide 51
                 //Update the color from the Vec3 resulting color
+                Vec3 color = scalarToRGB( v.weights[ displayed_bone ] );
+                glColor3f( color[0], color[1], color[2] );
 
             }
             glNormal3f (v.normal[0], v.normal[1], v.normal[2]);
@@ -113,7 +111,11 @@ void Mesh::drawTransformedMesh( SkeletonTransformation & transfo ) const {
         // you should use the skinning weights to blend the transformations of the vertex position by the bones.
         // to update the position use the weight and the bone transformation
         // for each bone p'=R*p+t
-        new_positions[ i ] = p;
+        new_positions[i] = Vec3( 0., 0., 0. );
+        for (int j = 0; j < transfo.bone_transformations.size(); ++j) {
+            new_positions[i] += vertices[i].weights[j] * (transfo.bone_transformations[j].world_space_rotation * p + transfo.bone_transformations[j].world_space_translation);
+        }
+
 
     }
     //---------------------------------------------------//
