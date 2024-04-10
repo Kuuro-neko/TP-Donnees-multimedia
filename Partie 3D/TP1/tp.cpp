@@ -28,6 +28,10 @@
 #include "src/Vec3.h"
 #include "src/Camera.h"
 
+#define MAX_SHAPES 4
+#define DEFAULT_N 20
+#define DEFAULT_PYRAMID_DEPTH 3
+
 
 using namespace std;
 
@@ -55,11 +59,64 @@ struct Triangle {
     unsigned int v[3];
 };
 
-
 struct Mesh {
     std::vector< Vec3 > vertices;
     std::vector< Vec3 > normals;
     std::vector< Triangle > triangles;
+};
+
+struct Pyramide { // Pour la fractale de Sierpinski
+    inline Pyramide (std::vector<Vec3> vertices) {
+        vbase0 = vertices[0];
+        vbase1 = vertices[1];
+        vbase2 = vertices[2];
+        vbase3 = vertices[3];
+        vtop = vertices[4];
+    }
+    void sendToMesh(Mesh & mesh, int offset) {
+        mesh.vertices.push_back(vbase0);
+        mesh.vertices.push_back(vbase1);
+        mesh.vertices.push_back(vbase2);
+        mesh.vertices.push_back(vbase3);
+        mesh.vertices.push_back(vtop);
+
+        mesh.normals.push_back(vbase0);
+        mesh.normals.push_back(vbase1);
+        mesh.normals.push_back(vbase2);
+        mesh.normals.push_back(vbase3);
+        mesh.normals.push_back(vtop);
+
+        mesh.triangles.push_back(Triangle(offset+0, offset+1, offset+2));
+        mesh.triangles.push_back(Triangle(offset+1, offset+3, offset+2));
+        mesh.triangles.push_back(Triangle(offset+0, offset+2, offset+4));
+        mesh.triangles.push_back(Triangle(offset+2, offset+3, offset+4));
+        mesh.triangles.push_back(Triangle(offset+3, offset+1, offset+4));
+        mesh.triangles.push_back(Triangle(offset+1, offset+0, offset+4));
+    }
+    std::vector<Pyramide> getDivisions() {
+        std::vector<Pyramide> divisions;
+        Vec3 v01 = (vbase0+vbase1)/2;
+        Vec3 v02 = (vbase0+vbase2)/2;
+        Vec3 v13 = (vbase1+vbase3)/2;
+        Vec3 v23 = (vbase2+vbase3)/2;
+        Vec3 vm = (vbase0+vbase1+vbase2+vbase3)/4;
+        Vec3 v04 = (vbase0+vtop)/2;
+        Vec3 v14 = (vbase1+vtop)/2;
+        Vec3 v24 = (vbase2+vtop)/2;
+        Vec3 v34 = (vbase3+vtop)/2;
+        divisions.push_back(Pyramide({vbase0, v01, v02, vm, v04}));
+        divisions.push_back(Pyramide({v01, vbase1, vm, v13, v14}));
+        divisions.push_back(Pyramide({v02, vm, vbase2, v23, v24}));
+        divisions.push_back(Pyramide({vm, v13, v23, vbase3, v34}));
+        divisions.push_back(Pyramide({v04, v14, v24, v34, vtop}));
+        return divisions;
+    }
+    // membres :
+    Vec3 vbase0;
+    Vec3 vbase1;
+    Vec3 vbase2;
+    Vec3 vbase3;
+    Vec3 vtop;
 };
 
 Mesh mesh;
@@ -87,8 +144,10 @@ static bool mouseMovePressed = false;
 static bool mouseZoomPressed = false;
 static int lastX=0, lastY=0, lastZoom=0;
 static bool fullScreen = false;
-static int n=20;
-static int shape = 0;
+static int n=DEFAULT_N;
+static int pyramidDepth=DEFAULT_PYRAMID_DEPTH;
+static int bypassN = 0;
+static int shape = 3;
 
 void setUnitSphere( Mesh & o_mesh, int nX=20, int nY=20 )
 {
@@ -111,8 +170,33 @@ void setUnitSphere( Mesh & o_mesh, int nX=20, int nY=20 )
     }
 }
 
-void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
+void sierpinskiPyramid(std::vector<Pyramide> & pyramides, int depth, int progress=1) {
+    std::vector<Pyramide> divisions;
+    for (long unsigned int i = 0; i < pyramides.size(); i++) {
+        Pyramide p = pyramides[i];
+        for (Pyramide division : p.getDivisions()) {
+            divisions.push_back(division);
+        }
+    }
+    pyramides.clear();
+    for (Pyramide p : divisions) {
+        pyramides.push_back(p);
+    }
+    if (progress < depth) {
+        sierpinskiPyramid(pyramides, depth, progress+1);
+    }
+}
+
+void setAdditionnalMesh( Mesh & o_mesh, int shape=0 )
 {
+    int nX, nY;
+    if (shape == 3) {
+        nX = pyramidDepth;
+        nY = pyramidDepth;
+    } else {
+        nX = n;
+        nY = n;
+    }
     o_mesh.vertices.clear();
     o_mesh.triangles.clear();
     o_mesh.normals.clear();
@@ -234,9 +318,7 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             }
         }
 
-        int faces[
-            12*5
-        ] = {
+        int faces[12*5] = {
             0, 12, 1, 18, 16,
             0, 16, 2, 10, 8,
             0, 8, 4, 14, 12,
@@ -259,6 +341,19 @@ void setAdditionnalMesh( Mesh & o_mesh, int nX=20, int nY=20, int shape=0 )
             o_mesh.triangles.push_back( Triangle(faces[i+1], faces[i+4], faces[i+3]) );
             o_mesh.triangles.push_back( Triangle(faces[i+3], faces[i+2], faces[i+1]) );
         }   
+        break;
+    }
+    case 3: // Sierpinski pyramid
+    {
+        std::vector<Pyramide> divisions;
+        divisions.push_back(Pyramide({Vec3(-1, -1, -1), Vec3(1, -1, -1), Vec3(-1, -1, 1), Vec3(1, -1, 1), Vec3(0, 1, 0)}));
+
+        sierpinskiPyramid(divisions, nX);
+        int offset = 0;
+        for (Pyramide p : divisions) {
+            p.sendToMesh(o_mesh, offset);
+            offset += 5;
+        }
         break;
     }
     }
@@ -588,8 +683,9 @@ void printUsage () {
          << " 1: Toggle loaded mesh display" << endl
          << " 2: Toggle unit sphere mesh display" << endl
          << " 3: Toggle additionnal mesh display" << endl
-         << " -: Decrease the number of meridians and parallels of the generated sphere" << endl
-         << " +: Increase the number of meridians and parallels of the generated sphere" << endl
+         << " -: Decrease the number of meridians and parallels of the generated sphere or the Sierpinski Pyramid's depth" << endl
+         << " +: Increase the number of meridians and parallels of the generated sphere or the Sierpinski Pyramid's depth" << endl
+         << " r: Reset the number of meridians and parallels of the generated sphere and the Sierpinski Pyramid's depth" << endl
          << " S/s: Cycle through the additional mesh shapes" << endl
          << " f: Toggle full screen" << endl
          << " <drag>+<left button>: rotate the scene" << endl
@@ -608,6 +704,9 @@ void printAdditionnalShape(int shape) {
             break;
         case 2:
             cout << "Additionnal shape (toggle it with 3) is now dodecahedron" << endl;
+            break;
+        case 3:
+            cout << "Additionnal shape (toggle it with 3) is now Sierpinski pyramid" << endl;
             break;
         }
 }
@@ -640,28 +739,65 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case '2': //Toggle unit sphere mesh display
         display_unit_sphere = !display_unit_sphere;
+        if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
         break;
 
     case '3': //Toggle additionnal mesh display
         display_additionnal = !display_additionnal;
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, shape );
         break;
     
     case '-':
-        if (n > 2) n--;
+        if ((shape != 3 || !display_additionnal || display_unit_sphere) && n > 2) n--;
+        if (shape == 3 && pyramidDepth > 1 && display_additionnal) pyramidDepth--;
         if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
-        if (display_additionnal) setAdditionnalMesh( additionnal_shape, n, n, shape );
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, shape );
         break;
 
     case '+':
-        n++;
+        if(shape != 3 || !display_additionnal || display_unit_sphere) n++;
+        if (shape == 3 && display_additionnal) {
+            if (bypassN == 1 || pyramidDepth < 8) {
+                pyramidDepth++;
+            } else {
+                cout << endl
+                    << "-------- \033[31mWARNING\033[0m -------" << endl
+                    << "Raising the depth of the pyramid to a higher value will result in a significant performance cost" << endl
+                    << "Use <b> to toggle the limit" << endl
+                    << "------------------------" << endl;
+            }
+        }
         if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
-        if (display_additionnal) setAdditionnalMesh( additionnal_shape, n, n, shape );
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, shape );
+        break;
+    
+    case 'S': //Cycle through the additional mesh shape
+        shape = (shape==0)?MAX_SHAPES-1:shape-1;
+        printAdditionnalShape(shape);
+        setAdditionnalMesh( additionnal_shape, shape );
         break;
 
     case 's': //Cycle through the additional mesh shape
-        shape = (shape+1)%3;
+        shape = (shape+1)%MAX_SHAPES;
         printAdditionnalShape(shape);
-        setAdditionnalMesh( additionnal_shape, n, n, shape );
+        setAdditionnalMesh( additionnal_shape, shape );
+        break;
+    
+    case 'b':
+        bypassN = (bypassN+1)%2;
+        if (bypassN == 1) {
+            cout << "Bypassing the limit of the pyramid depth" << endl;
+        } else {
+            pyramidDepth = DEFAULT_PYRAMID_DEPTH;
+            cout << "Limiting the depth of the pyramid" << endl;
+        }
+        break;
+    
+    case 'r':
+        n = DEFAULT_N;
+        pyramidDepth = DEFAULT_PYRAMID_DEPTH;
+        if (display_unit_sphere) setUnitSphere( unit_sphere, n, n );
+        if (display_additionnal) setAdditionnalMesh( additionnal_shape, shape );
         break;
 
     case '?':
