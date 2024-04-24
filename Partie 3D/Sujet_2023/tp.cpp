@@ -107,6 +107,7 @@ std::vector<Mesh *> meshes;
 static GLuint glID;
 
 static int levels = 4;
+static unsigned int nbSommets = 30;
 static float ambientRef = 0.2f;
 static float diffuseRef = 0.6f;
 static float specularRef = 0.4f;
@@ -240,7 +241,7 @@ void buildModel(Mesh & o_mesh, unsigned int n=10, float radius=0.5, float height
         T.push_back( Triangle(i, i%n+1, 0));
         T.push_back( Triangle(i+n, 0, (i%n)+1+n));
     }
-    
+
     //Creer les triangles des bases (cercles)
     for (unsigned int i = 1; i <= n; i++) {
         T.push_back( Triangle(i, V.size()-2, i%n+1));
@@ -292,15 +293,31 @@ void updateAnimation (){
     //Récupérer la position des sommets du maillage courant à mettre à jour
     vector<Vertex> & V = current_mesh.getVertices ();
     vector<Vertex> & V0 = diabolo_mesh.getVertices ();
-
-    Vec3 translation(0.,0., 0.);
+    double x;
+    double z;
+    // Animation en 8, cercle + cercle de sens opposé décallé sur x de 2*r
+    if (offset <= 1) {
+        x = cos(2*M_PI * offset)*0.5;
+        z = sin(2*M_PI * offset)*0.5;
+    } else {
+        x = (2+cos((2*M_PI * offset)+M_PI))*0.5;
+        z = (sin((2*M_PI * offset)+M_PI))*0.5*-1;
+    }
+    Vec3 translation(x,0.5, z);
 
     Mat3 Rx, Ry, Rz;
 
     Mat3 rotation = Mat3::Identity();
     //Mettre à jour la matrice de rotation pour effectuer une rotation de PI/2. autour de l'axe X
     //Ajouter ensuite une rotation autour de l'axe z de angle (la variable globale mise à jour par l'appuie sur R/r)
-
+    Rx = Mat3 (1., 0., 0.,
+        0., cos(angle), -sin(angle),
+        0., sin(angle), cos(angle));
+    Rz = Mat3 (cos(angle), -sin(angle), 0.,
+        sin(angle), cos(angle), 0.,
+        0., 0., 1.);
+    
+    rotation = rotation * Rx * Rz;
 
     for(  unsigned int i = 0 ; i < V.size() ; i++ ){
 
@@ -550,6 +567,13 @@ void idle () {
     static unsigned int counter = 0;
     counter++;
     float currentTime = glutGet ((GLenum)GLUT_ELAPSED_TIME);
+    // Animation continue
+    if (exercice == Animation && currentTime - lastTime >= 1000.0*(1/60)) {
+        angle += 0.1f;offset += 0.01f;
+        if( angle >= (float)M_PI*2.f ) angle = 0.;
+        if( offset >= 2. ) offset = 0.;
+        updateAnimation();
+    }
     if (currentTime - lastTime >= 1000.0f) {
         FPS = counter;
         counter = 0;
@@ -651,6 +675,16 @@ void key (unsigned char keyPressed, int x, int y) {
         if (ambientRef > 0.1f) {
             ambientRef -= 0.1f;
             phongShader->setAmbientRef (ambientRef);
+        }
+        break;
+    case 'B':
+        nbSommets += 1;
+        buildModel(current_mesh, nbSommets);
+        break;
+    case 'b':
+        if (nbSommets > 1) {
+            nbSommets -= 1;
+            buildModel(current_mesh, nbSommets);
         }
         break;
     case '+':
