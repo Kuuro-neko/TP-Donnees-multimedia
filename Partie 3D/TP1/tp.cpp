@@ -28,7 +28,7 @@
 #include "src/Vec3.h"
 #include "src/Camera.h"
 
-#define MAX_SHAPES 4
+#define MAX_SHAPES 5
 #define DEFAULT_N 20
 #define DEFAULT_PYRAMID_DEPTH 3
 
@@ -353,6 +353,44 @@ void setAdditionnalMesh( Mesh & o_mesh, int shape=0 )
         for (Pyramide p : divisions) {
             p.sendToMesh(o_mesh, offset);
             offset += 5;
+        }
+        break;
+    }
+    case 4: // Cylindre
+    {
+        // Cercles de base
+        for (int i = 0; i <= nX; i++) {
+            double x = cos(2*M_PI * i/nX);
+            double y = sin(2*M_PI * i/nX);
+            double z = 0.5;
+            o_mesh.vertices.push_back( Vec3(x, y, z) );
+            o_mesh.normals.push_back( Vec3(x, y, z) );
+        }
+        for (int i = 0; i <= nX; i++) {
+            double x = cos(2*M_PI * i/nX);
+            double y = sin(2*M_PI * i/nX);
+            double z = -0.5;
+            o_mesh.vertices.push_back( Vec3(x, y, z) );
+            o_mesh.normals.push_back( Vec3(x, y, z) );
+        }
+
+        // Centre des cercles
+        o_mesh.vertices.push_back( Vec3(0, 0, 0.5) );
+        o_mesh.vertices.push_back( Vec3(0, 0, -0.5) );
+
+        o_mesh.normals.push_back( Vec3(0,0, 0.5) );
+        o_mesh.normals.push_back( Vec3(0,0, -0.5) );
+
+        // Triangles des cercles de base
+        for (unsigned int i = 0; i < nX; i++) {
+            o_mesh.triangles.push_back( Triangle(i, (i%nX)+1, o_mesh.vertices.size()-2));
+            o_mesh.triangles.push_back( Triangle(i+nX+1, o_mesh.vertices.size()-1, (i%nX)+1+nX+1));
+        }
+
+        // Triangles des parois
+        for (unsigned int i = 0; i < nX; i++) {
+            o_mesh.triangles.push_back( Triangle(i, i+nX+1, (i%nX)+1));
+            o_mesh.triangles.push_back( Triangle(i+nX+1, (i%nX)+1+nX+1, (i%nX)+1));
         }
         break;
     }
@@ -707,6 +745,9 @@ void printAdditionnalShape(int shape) {
             break;
         case 3:
             cout << "Additionnal shape (toggle it with 3) is now Sierpinski pyramid" << endl;
+            break;
+        case 3:
+            cout << "Additionnal shape (toggle it with 3) is now cylinder" << endl;
             break;
         }
 }
