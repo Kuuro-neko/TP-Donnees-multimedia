@@ -41,3 +41,12 @@ Keys
 - **b** : toggle the limit for the Sierpinski Pyramid's depth, reactivating it will bring the depth to the default value
 - **Middle mouse button + move** : rotate the scene
 - **Left mouse button + move** : rotate the scene
+
+Preview the shapes :
+| Cone    | Cylinder | Diabolo |
+|------|------|------|
+|![cone](./img/cone.png)|![cylinder](./img/cylinder.png)|![diabolo](./img/diabolo.png)|
+
+| Sphere | Dodecahedron | Pyramid |
+|------|------|------|
+|![sphere](./img/sphere.png)|![dodecahedron](./img/dodecahedron.png)|![pyramid](./img/pyramid.png)|
