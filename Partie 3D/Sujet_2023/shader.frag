@@ -60,11 +60,18 @@ void main (void) {
                 float spotCutOff = gl_LightSource[i].spotCosCutoff; //cosinus(angleCutOff)
 
                     //TOON shading a completer
+             
                 float lv = float(levels);
                 vec3 L = gl_LightSource[0].position.xyz;
                 float dotLN = dot(normalize(L - P), N);
                 dotLN = floor((dotLN + 1.0) * (lv/2.0)) / (lv/2.0) - 1.0;
                 vec4 Id = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * dotLN;
+
+
+
+
+                    // Shading classique
+                //vec4 Id = Isd*Kd*dotLN;
 
                 vec4 Iss = gl_LightSource[i].specular;
                 vec4 Ks = gl_FrontMaterial.specular;
