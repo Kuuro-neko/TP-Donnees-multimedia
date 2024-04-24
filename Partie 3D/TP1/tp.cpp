@@ -746,7 +746,7 @@ void printAdditionnalShape(int shape) {
         case 3:
             cout << "Additionnal shape (toggle it with 3) is now Sierpinski pyramid" << endl;
             break;
-        case 3:
+        case 4:
             cout << "Additionnal shape (toggle it with 3) is now cylinder" << endl;
             break;
         }
