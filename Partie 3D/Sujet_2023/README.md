@@ -69,7 +69,7 @@ Afin de calculer le toon shading pour `levels` niveaux, la ligne suivante permet
 ```glsl
 dotLN = floor((dotLN + 1.0) * (levels/2.0)) / (levels/2.0) - 1.0;
 ```
-Après nivellation du dotLN entre les `levels` niveaux, on poursuit le alcul du sahder comme d'habitude avec ce nouveau dotLN.
+Après nivellation du dotLN entre les `levels` niveaux, on poursuit le calcul du shader comme d'habitude avec ce nouveau dotLN.
 
 Voici le résultat : 
 | 3 niveaux | 4 niveaux | 5 niveaux |
@@ -78,7 +78,7 @@ Voici le résultat :
 
 ### Ajout d'un bord noir
 
-Afin d'ajouter un bord noir pour un seuil `S`, lorsque le produit scalaire entre N et V est inférieur à celui-ci, on ne calcule pas le shading et on met directement une couleure noire pour cette partie de l'objet. Cela se traduit en code par :
+Afin d'ajouter un bord noir pour un seuil `S`, lorsque le produit scalaire entre N et V est inférieur à celui-ci, on ne calcule pas le shading et on met directement une couleur noire pour cette partie de l'objet. Cela se traduit en code par :
 
 ```glsl
 double S = 0.3;
