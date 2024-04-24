@@ -53,22 +53,29 @@ void main (void) {
 
         float dotLN = max(dot (L, N), 0.);
         if(dotLN >0.){
-            float spotCutOff = gl_LightSource[i].spotCosCutoff; //cosinus(angleCutOff)
+            if (dot(N, V) < 0.3) { // Seuil < 0.3 : contours
+                gl_FragColor = vec4(0, 0, 0, 1);
+            } else {
+                
+                float spotCutOff = gl_LightSource[i].spotCosCutoff; //cosinus(angleCutOff)
 
-                   //TOON shading a completer
+                    //TOON shading a completer
+                float lv = float(levels);
+                vec3 L = gl_LightSource[0].position.xyz;
+                float dotLN = dot(normalize(L - P), N);
+                dotLN = floor((dotLN + 1.0) * (lv/2.0)) / (lv/2.0) - 1.0;
+                vec4 Id = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * dotLN;
 
+                vec4 Iss = gl_LightSource[i].specular;
+                vec4 Ks = gl_FrontMaterial.specular;
 
-            vec4 Id = Isd*Kd*dotLN;
+                vec3 R = reflect (-L, N);
 
-            vec4 Iss = gl_LightSource[i].specular;
-            vec4 Ks = gl_FrontMaterial.specular;
+                float dotRV = max(dot(R, V), 0.0);
+                vec4 Is = Iss*Ks*max (0.0, pow (dotRV, shininess));
 
-            vec3 R = reflect (-L, N);
-
-            float dotRV = max(dot(R, V), 0.0);
-            vec4 Is = Iss*Ks*max (0.0, pow (dotRV, shininess));
-
-            I += diffuseRef * Id + specularRef * Is;
+                I += diffuseRef * Id + specularRef * Is;
+            }
         }
 
     }
