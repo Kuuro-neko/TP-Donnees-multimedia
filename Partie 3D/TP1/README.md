@@ -37,15 +37,15 @@ Keys
   - **\-** : decrease the number of meridians and parallels of the generated sphere or the Sierpinski Pyramid's depth
   - **\+** : increase the number of meridians and parallels of the generated sphere or the Sierpinski Pyramid's depth
 - **3** : toggle display of the additionnal meshes
-- **S/s** : cycle through the additionnal meshes (Cone, Diabolo, Dodecahedron, Sierpinski Pyramid, Cylinder)
+- **S/s** : cycle through the additionnal meshes (Cone, Diabolo, Dodecahedron, Sierpinski Pyramid, Cylinder, Donut)
 - **b** : toggle the limit for the Sierpinski Pyramid's depth, reactivating it will bring the depth to the default value
 - **Middle mouse button + move** : rotate the scene
 - **Left mouse button + move** : rotate the scene
 
 Preview the shapes :
-| Cone    | Cylinder | Diabolo |
-|------|------|------|
-|![cone](./img/cone.png)|![cylinder](./img/cylinder.png)|![diabolo](./img/diabolo.png)|
+| Cone    | Cylinder | Diabolo | Donut |
+|------|------|------|------|
+|![cone](./img/cone.png)|![cylinder](./img/cylinder.png)|![diabolo](./img/diabolo.png)|![donut](./img/donut.png)|
 
 | Sphere | Dodecahedron | Pyramid |
 |------|------|------|

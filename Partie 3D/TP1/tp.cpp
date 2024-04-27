@@ -28,7 +28,7 @@
 #include "src/Vec3.h"
 #include "src/Camera.h"
 
-#define MAX_SHAPES 5
+#define MAX_SHAPES 6
 #define DEFAULT_N 20
 #define DEFAULT_PYRAMID_DEPTH 3
 
@@ -394,6 +394,26 @@ void setAdditionnalMesh( Mesh & o_mesh, int shape=0 )
         }
         break;
     }
+    case 5: // Donut
+    {
+        double r = 0.5;
+        double R = 1;
+        for (int u = 0; u <= nX; u++) {
+            for (int v = 0; v <= nY; v++) {
+                double x = (R + r*cos(2*M_PI * v/nY))*cos(2*M_PI * u/nX);
+                double y = (R + r*cos(2*M_PI * v/nY))*sin(2*M_PI * u/nX);
+                double z = r*sin(2*M_PI * v/nY);
+
+                o_mesh.vertices.push_back( Vec3(x, y, z) );
+                o_mesh.normals.push_back( Vec3(x, y, z) );
+            }
+        }
+
+        for (unsigned int i = 0; i < o_mesh.vertices.size()-nX-1; i++) {
+            o_mesh.triangles.push_back( Triangle(i, i+nX, i+nX+1));
+            o_mesh.triangles.push_back( Triangle(i, i+nX+1, i+1));
+        }
+    }
     }
 }
 
@@ -748,6 +768,9 @@ void printAdditionnalShape(int shape) {
             break;
         case 4:
             cout << "Additionnal shape (toggle it with 3) is now cylinder" << endl;
+            break;
+        case 5:
+            cout << "Additionnal shape (toggle it with 3) is now donut" << endl;
             break;
         }
 }
