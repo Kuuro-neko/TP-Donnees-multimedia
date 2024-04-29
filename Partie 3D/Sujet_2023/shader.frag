@@ -49,7 +49,11 @@ void main (void) {
         vec4 Isd = gl_LightSource[i].diffuse;
         vec4 Kd = gl_FrontMaterial.diffuse;
 
-        vec3 L = normalize (vec3(gl_ModelViewMatrix *gl_LightSource[i].position) - P);
+        vec3 L;
+        // Lumière normale
+        L = normalize (vec3(gl_ModelViewMatrix *gl_LightSource[i].position) - P);
+        // Lumière à la position de la caméra
+        //L = normalize (vec3(gl_ModelViewMatrix ));
 
         float dotLN = max(dot (L, N), 0.);
         if(dotLN >0.){
@@ -59,11 +63,8 @@ void main (void) {
                 
                 float spotCutOff = gl_LightSource[i].spotCosCutoff; //cosinus(angleCutOff)
 
-                    //TOON shading a completer
-             
+                    //TOON shading
                 float lv = float(levels);
-                vec3 L = gl_LightSource[0].position.xyz;
-                float dotLN = dot(normalize(L - P), N);
                 dotLN = floor((dotLN + 1.0) * (lv/2.0)) / (lv/2.0) - 1.0;
                 vec4 Id = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * dotLN;
 

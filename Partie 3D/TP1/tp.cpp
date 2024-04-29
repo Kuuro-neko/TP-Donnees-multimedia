@@ -413,6 +413,7 @@ void setAdditionnalMesh( Mesh & o_mesh, int shape=0 )
             o_mesh.triangles.push_back( Triangle(i, i+nX, i+nX+1));
             o_mesh.triangles.push_back( Triangle(i, i+nX+1, i+1));
         }
+        break;
     }
     }
 }
